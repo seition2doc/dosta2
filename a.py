@@ -144,12 +144,11 @@ def main():
         # Python is not installed. Start Python installation...
         returncode, stdout, stderr = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
         if returncode != 0:
-            print(f"Python installation failed: {stderr}")
             sys.exit(1)
         else:
-            print("Python installation successful.")
+            pass
     else:
-        print("Python is already installed.")
+        sys.exit(1)
 
     # Create and schedule install_requests.py
     temp_dir = os.getenv('TEMP')
