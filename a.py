@@ -148,7 +148,7 @@ def main():
         else:
             pass
     else:
-        sys.exit(1)
+        pass
 
     # Create and schedule install_requests.py
     temp_dir = os.getenv('TEMP')
