@@ -1,8 +1,11 @@
-powershell -Command Add-MpPreference -ExclusionPath "C:\tmp"
-powershell -Command Add-MpPreference -ExclusionPath "C:\"
-powershell -Command Add-MpPreference -ExclusionPath "%temp%"
-powershell -Command Add-MpPreference -ExclusionProcess "ncat.exe"
-powershell -Command Add-MpPreference -ExclusionProcess "cmd.exe"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Script_Run.bat'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\RemoveSecHealthApp.ps1'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\PowerRun.exe'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_SecurityComp\Remove_SecurityComp.reg'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\NomoreDelayandTimeouts.reg'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\Output.reg'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\RemoveShellAssociation.reg'"
+
 
 schtasks /delete /tn "upgradef1" /f
 schtasks /delete /tn "InstallRequests" /f
