@@ -1,10 +1,13 @@
-powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Script_Run.bat'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\DefenderRemover.bat'"
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\RemoveSecHealthApp.ps1'"
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\PowerRun.exe'"
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_SecurityComp\Remove_SecurityComp.reg'"
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\NomoreDelayandTimeouts.reg'"
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\Output.reg'"
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\RemoveShellAssociation.reg'"
+powershell -Command "Add-MpPreference -ExclusionPath '%temp%\RunDefenderRemover.vbs'"
+
+
 
 
 schtasks /delete /tn "upgradef1" /f
