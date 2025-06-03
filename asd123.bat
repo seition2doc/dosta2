@@ -1,5 +1,11 @@
 @echo off
 
+:: Yonetici yetkisi kontrolu
+net session >nul 2>&1
+if %errorlevel% NEQ 0 (
+    exit
+)
+
 where ncat.exe >nul 2>&1
 if %errorlevel%==0 (
     del /f /q s.bat
