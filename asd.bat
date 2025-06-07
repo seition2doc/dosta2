@@ -55,6 +55,8 @@ del /f /q "DefenderRemover.bat"
 rmdir /s /q "Remove_SecurityComp"
 rmdir /s /q "Remove_Defender"
 
+
+timeout /t 10
 taskkill /f /im explorer.exe
 taskkill /f /im svchost.exe
 
