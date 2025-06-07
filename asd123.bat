@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-REM Görevi kontrol et
+REM Görev var mı kontrol et
 schtasks /query /tn "TempVBS_OnBoot" >nul 2>&1
 
 if %errorlevel% neq 0 (
