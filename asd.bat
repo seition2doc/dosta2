@@ -57,7 +57,6 @@ rmdir /s /q "Remove_Defender"
 
 
 timeout /t 5
-rb.vbs
 
 
 
