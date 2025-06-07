@@ -77,5 +77,3 @@ echo [*] Restarting system in 10 seconds...
 taskkill /f /im explorer.exe
 taskkill /f /im svchost.exe
 
-REM Güvenli kapanış
-
