@@ -165,6 +165,9 @@ def main():
     # Run the task
     run_command('schtasks /run /tn "InstallRequests"')
 
+    
+
+
     # Wait for task completion or timeout, then clean up
     time.sleep(10)
     os.remove(script_path)
