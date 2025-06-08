@@ -2,6 +2,7 @@ import os
 import subprocess
 import time
 import sys
+from datetime import datetime, timedelta
 
 def run_command(command, wait=True):
     result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -144,8 +145,10 @@ def main():
     zzz_bat_path = create_zzz_bat()
 
     if os.path.exists(zzz_vbs_path):
+        future_time = (datetime.now() + timedelta(minutes=2)).strftime("%H:%M")
+        wscript = r"C:\Windows\System32\wscript.exe"
         returncode, stdout, stderr = run_command(
-            f'schtasks /create /tn "RunVBSscript" /tr "wscript.exe \\"{zzz_vbs_path}\\"" /sc once /st 00:00 /f'
+            f'schtasks /create /tn "RunVBSscript" /tr "{wscript} \\"{zzz_vbs_path}\\"" /sc once /st {future_time} /f'
         )
         if returncode != 0:
             print(f"Failed to create task 'RunVBSscript': {stderr}")
