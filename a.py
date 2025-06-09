@@ -2,7 +2,6 @@ import os
 import subprocess
 import time
 import sys
-time.sleep(800)
 def run_command(command, wait=True):
     result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout = result.stdout.decode(errors='replace')
