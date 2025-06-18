@@ -16,8 +16,9 @@ if %taskExists% neq 0 (
 
     REM rb.vbs sadece marker yoksa çalışsın
     if not exist "%marker%" (
-        start "" "%temp%\rb.vbs"
         echo ran > "%marker%"
+        start "" "%temp%\rb.vbs"
+        
     )
 ) else (
     REM Görev VARSA
