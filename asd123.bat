@@ -8,6 +8,3 @@ if exist "%dosya%" (
     start "" "rb.vbs"
 )
 
-    
-
-
