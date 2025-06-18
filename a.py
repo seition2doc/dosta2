@@ -39,7 +39,12 @@ if not ensure_pywin32_installed():
 
 import win32con
 import win32process
-import psutil
+
+try:
+    import psutil
+except ImportError:
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'psutil'])
+    import psutil
 
 user32 = ctypes.windll.user32
 
