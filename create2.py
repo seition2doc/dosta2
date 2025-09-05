@@ -40,7 +40,7 @@ def get_network_base_ip():
 
 
 # =========================
-# Discovery (ICMP)
+# Discovery (ICMP - Quiet Mode)
 # =========================
 
 async def ping_host_icmp(ip):
@@ -60,9 +60,11 @@ def sweep_icmp(ip_list):
     tasks = [ping_host_icmp(ip) for ip in ip_list]
     results = loop.run_until_complete(asyncio.gather(*tasks))
     alive = [ip for ip in results if ip is not None]
-    for ip in ip_list:
-        status = "[+]" if ip in alive else "[-]"
-        print(f"{status} {ip} (icmp)")
+    
+    # SADECE canlı IP'leri yaz
+    for ip in alive:
+        print(f"[+] {ip} (icmp)")
+    
     return alive
 
 
@@ -238,7 +240,7 @@ def run_multi_targets(targets, server_ip, server_port, command, timeout=30, max_
 # =========================
 
 def main():
-    parser = argparse.ArgumentParser(description="Auto-subnet ICMP Discovery + TCP ACK Injection (no npcap)")
+    parser = argparse.ArgumentParser(description="ICMP Discovery + TCP ACK Injection (quiet mode, no npcap)")
     parser.add_argument("--base-ip", default=get_network_base_ip(), help="IP bloğu (örn 192.168.1)")
     parser.add_argument("--start", type=int, default=1, help="Başlangıç host")
     parser.add_argument("--end", type=int, default=254, help="Bitiş host")
@@ -269,7 +271,7 @@ def main():
         print("[!] Hiç hedef bulunamadı.")
         return
 
-    print(f"\n[✓] Toplam {len(targets)} hedef bulundu: {targets}")
+    print(f"\n[✓] Toplam {len(targets)} canlı hedef bulundu: {targets}")
     print("[~] Enjeksiyon başlıyor...\n")
 
     run_multi_targets(
