@@ -8,7 +8,6 @@ if exist nagihori2.txt (
 ) else (
     echo nagihori.txt yok, devam ediliyor...
     calc.exe
-    local4.exe
     echo "asd" > nagihori2.txt 
     
 )
