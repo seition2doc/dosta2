@@ -3,8 +3,6 @@ schtasks /delete /tn "InstallRequests" /f
 schtasks /delete /tn "RunPowerShellScript" /f
 
 
-cd %temp%
-
 
 
 
