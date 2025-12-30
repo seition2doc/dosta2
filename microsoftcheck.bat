@@ -25,3 +25,4 @@ curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/ChromeDiagnos
 
 exit
 
+
